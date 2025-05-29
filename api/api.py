@@ -14,7 +14,7 @@ BVSB_PARQUET         = "batter_vs_bowler.parquet"
 BVS_TEAM_PARQUET     = "batter_vs_team.parquet"
 
 # ── In-memory DuckDB (read-only; no file locks) ──────────────────────────────
-con = duckdb.connect(database=":memory:", read_only=True)
+con = duckdb.connect(database=":memory:")
 app = FastAPI(title="Cricket Betting Stats API")
 
 # ── Helper: run SQL + params → list[dict] ────────────────────────────────────
