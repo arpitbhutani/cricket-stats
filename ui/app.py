@@ -1,6 +1,6 @@
 import streamlit as st, requests, pandas as pd
 
-API = "https://cricket-stats-7ma4.onrender.com"   # your Render URL
+API = "https://cricpick.onrender.com"   # your Render URL
 
 st.set_page_config(page_title="Cricket Betting Stats", layout="wide")
 st.title("🔍 Player Quick Lookup")
