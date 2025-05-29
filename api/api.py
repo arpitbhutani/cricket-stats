@@ -7,12 +7,14 @@ from fastapi.middleware.cors import CORSMiddleware
 import duckdb
 
 # ── Parquet paths (edit if needed) ──────────────────────────────────────────
-PLAYER_PARQUET       = "player_batting.parquet"
-BOWLER_PARQUET       = "bowler_summary.parquet"
-TEAM_BAT_PARQUET     = "team_phase_summary.parquet"
-TEAM_BOWL_PARQUET    = "team_bowling_phase_summary.parquet"
-BVSB_PARQUET         = "batter_vs_bowler.parquet"
-BVS_TEAM_PARQUET     = "batter_vs_team.parquet"
+# ── Parquet paths ──────────────────────────────────────────────────────────
+PLAYER_PARQUET       = "api/parquet/player_batting.parquet"
+BOWLER_PARQUET       = "api/parquet/bowler_summary.parquet"
+TEAM_BAT_PARQUET     = "api/parquet/team_phase_summary.parquet"
+TEAM_BOWL_PARQUET    = "api/parquet/team_bowling_phase_summary.parquet"
+BVSB_PARQUET         = "api/parquet/batter_vs_bowler.parquet"
+BVS_TEAM_PARQUET     = "api/parquet/batter_vs_team.parquet"
+
 
 # ── DuckDB connection (in-memory) ───────────────────────────────────────────
 con = duckdb.connect(database=":memory:")
