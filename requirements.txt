@@ -1,10 +1,10 @@
 fastapi
 uvicorn[standard]
 duckdb
+pandas
 polars
 pyarrow
-python-multipart     # CORS pre-flight helper
-tqdm
-streamlit
-pandas # nice table display
+python-multipart
 requests
+streamlit
+tqdm
