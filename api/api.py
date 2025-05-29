@@ -5,7 +5,10 @@ from typing import Optional, List, Tuple
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 import duckdb
-import pandas as pd, numpy as np
+import math, json
+from typing import Any, Optional, Tuple, List
+from fastapi import HTTPException
+import duckdb
 
 # ── Parquet paths (edit if needed) ──────────────────────────────────────────
 # ── Parquet paths ──────────────────────────────────────────────────────────
@@ -29,23 +32,29 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ── helpers ────────────────────────────────────────────────────────────────
-# ── helpers ────────────────────────────────────────────────────────────────
+# ── helpers ───────────────────────────────────────────────────────────
 def event_clause(event: Optional[str]) -> str:
     return "AND event_name ILIKE '%' || ? || '%'" if event else ""
 
+def _sanitise(value: Any) -> Any:
+    """Turn NaN/Inf into None so json.dumps never explodes."""
+    if isinstance(value, float) and not math.isfinite(value):
+        return None
+    return value
+
 def run(sql: str, params: Tuple) -> List[dict]:
-    """Execute SQL; return list-of-dicts with NaN/Inf converted to None."""
-    df = con.execute(sql, params).fetchdf()          # pandas DataFrame
-    if df.empty:
+    """Execute SQL and return list-of-dicts with safe numbers."""
+    cursor = duckdb.execute(sql, params)
+    cols = [d[0] for d in cursor.description]
+    rows_raw = cursor.fetchall()
+
+    if not rows_raw:
         raise HTTPException(status_code=404, detail="No rows found")
 
-    # replace non-finite numbers -> None so json.dumps is happy
-    df = (
-        df.replace({np.inf: None, -np.inf: None})
-          .where(pd.notnull(df), None)
-    )
-    return df.to_dict(orient="records")
+    return [
+        {col: _sanitise(val) for col, val in zip(cols, row)}
+        for row in rows_raw
+    ]
 
 
 # ═══════════════════════════════════════════════════════════════════════════
