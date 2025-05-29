@@ -56,6 +56,8 @@ def run(sql: str, params: Tuple) -> List[dict]:
         for row in rows_raw
     ]
 
+def season_clause(season: Optional[str]) -> str:
+    return "AND season ILIKE '%' || ? || '%'" if season else ""
 
 # ═══════════════════════════════════════════════════════════════════════════
 # 1️⃣  Player batting card
@@ -74,7 +76,7 @@ def player_card(
       WHERE batter     ILIKE '%' || ? || '%'
         AND match_type = ?
         {event_clause(event)}
-        {'AND season = ?' if season else ''}
+        {season_clause(season)}
       ORDER BY season, event_name
       LIMIT {limit}
     """
@@ -100,7 +102,7 @@ def bowler_card(
       WHERE bowler     ILIKE '%' || ? || '%'
         AND match_type = ?
         {event_clause(event)}
-        {'AND season = ?' if season else ''}
+        {season_clause(season)}
       ORDER BY season
       LIMIT {limit}
     """
@@ -125,7 +127,7 @@ def team_bat_phase(
       WHERE batting_team ILIKE '%' || ? || '%'
         AND match_type   = ?
         {event_clause(event)}
-        {'AND season = ?' if season else ''}
+        {season_clause(season)}
     """
     params = (team, match_type) + \
              ((event,)  if event  else ()) + \
@@ -148,7 +150,7 @@ def team_bowl_phase(
       WHERE fielding_team ILIKE '%' || ? || '%'
         AND match_type    = ?
         {event_clause(event)}
-        {'AND season = ?' if season else ''}
+        {season_clause(season)}
     """
     params = (team, match_type) + \
              ((event,)  if event  else ()) + \
