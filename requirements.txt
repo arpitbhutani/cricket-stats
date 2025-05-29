@@ -5,3 +5,6 @@ polars
 pyarrow
 python-multipart     # CORS pre-flight helper
 tqdm
+streamlit
+pandas # nice table display
+requests
