@@ -1,5 +1,5 @@
 import duckdb,textwrap
-con = duckdb.connect("cricket.duckdb")
+python con = duckdb.connect(database=":memory:")
 
 
 con.execute("""
