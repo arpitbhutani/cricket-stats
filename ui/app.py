@@ -1,5 +1,3 @@
-mkdir -p ui
-cat > ui/app.py <<'PY'
 import streamlit as st, requests, pandas as pd
 
 API_BASE = "https://cricket-stats-7ma4.onrender.com"   # <- your Render URL
