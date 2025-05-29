@@ -1,15 +1,26 @@
-import streamlit as st, pandas as pd, requests, functools
+import time, requests, functools, streamlit as st, pandas as pd
 
-API = "https://cricpick.onrender.com" 
+API = "https://cricpick.onrender.com"   # ← your backend URL
 
-# ---------- helper ----------------------------------------------------------
 @functools.lru_cache(maxsize=512)
-def jget(url, **p):
-    r = requests.get(f"{API}{url}", params=p, timeout=15)
-    if r.status_code == 404:
-        return []
-    r.raise_for_status()
-    return r.json()
+def jget(endpoint: str, _tries: int = 3, **params):
+    """GET with up-to-3 retries; show 'Backend waking up…' instead of 502."""
+    url = f"{API}{endpoint}"
+    for i in range(_tries):
+        try:
+            r = requests.get(url, params=params, timeout=15)
+            if r.status_code == 502:
+                time.sleep(2)
+                continue
+            if r.status_code == 404:
+                return []
+            r.raise_for_status()
+            return r.json()
+        except requests.exceptions.RequestException as e:
+            if i == _tries - 1:
+                st.error(f"API error {e}")
+                return []
+            time.sleep(2)
 
 def formats(): return jget("/lists/formats")
 def events(fmt): return [d["name"] for d in jget("/lists/events", fmt=fmt)]
@@ -78,12 +89,20 @@ if df.empty:
 
 st.dataframe(df, use_container_width=True)
 
+# ─── Drill-down per-match table ─────────────────────────────────────────────
 sel = st.selectbox("Drill-down player", df["batter"])
 if sel:
-    drill = pd.DataFrame(
-        jget("/batting/drill",
-            batter=sel,
-            **{k: v for k, v in params.items() if k != "players"}) )
+    # only send the fmt, batter, and look-back years
+    drill_params = {
+        "fmt": fmt,
+        "batter": sel,
+        "last": yrs
+    }
+    drill_data = jget("/batting/drill", **drill_params)
+    if not drill_data:
+        st.info("No match-level rows for that player.")
+    else:
+        drill_df = pd.DataFrame(drill_data)
+        st.subheader(f"{sel} – per match breakdown")
+        st.dataframe(drill_df, hide_index=True, use_container_width=True)
 
-    st.subheader(f"{sel} – per match")
-    st.dataframe(drill, hide_index=True, use_container_width=True)

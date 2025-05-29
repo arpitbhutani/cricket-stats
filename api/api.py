@@ -240,16 +240,41 @@ def team(fmt: str, event: str, team: str):
 # MATCH-UPS (batter vs bowler quick table)
 # ========================================================================== #
 @app.get("/matchup")
-def matchup(fmt: str, batter: str, bowler: str, last: int = 3):
-    cur = db.execute(
-        f"""SELECT
-              COUNT(*) balls,
-              SUM(runs_batter) runs,
-              SUM(CASE WHEN wicket_type IS NOT NULL
-                       AND player_out = ? THEN 1 END) dismissals
-            FROM read_parquet('{BALLS}')
-            WHERE match_type=? AND batter ILIKE ? AND bowler ILIKE ?
-              AND ({season(last)})""",
-        (batter, fmt, f"%{batter}%", f"%{bowler}%"),
-    )
-    return rows(cur)
+def matchup(
+    fmt: str,
+    batter: str,
+    opp: str,
+    last: int = 3
+):
+    """
+    Returns one row per bowler who bowled to `batter` against `opp`
+    in the last N years, with balls, runs conceded, and dismissals.
+    """
+    sql = f"""
+    SELECT
+      bowler,
+      COUNT(*)                AS balls,
+      SUM(runs_batter)        AS runs,
+      SUM(
+        CASE
+          WHEN wicket_type IS NOT NULL
+            AND player_out = batter
+          THEN 1
+        END
+      )                        AS dismissals
+    FROM read_parquet('{BALLS}')
+    WHERE match_type = ?
+      AND {w('batter', batter)}
+      AND {w('bowling_team', opp)}
+      AND ({season(last)})
+    GROUP BY bowler
+    ORDER BY balls DESC
+    """
+    params: List[Any] = [fmt]
+    if batter:
+        params.append(batter)
+    if opp:
+        params.append(opp)
+
+    data = rows(db.execute(sql, tuple(params)))
+    return data
