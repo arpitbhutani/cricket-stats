@@ -1,0 +1,7 @@
+fastapi
+uvicorn[standard]
+duckdb
+polars
+pyarrow
+python-multipart     # CORS pre-flight helper
+tqdm
