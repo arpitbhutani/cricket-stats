@@ -57,6 +57,10 @@ st.dataframe(df, use_container_width=True)
 
 sel = st.selectbox("Drill-down player", df["batter"])
 if sel:
-    drill = pd.DataFrame(jget("/batting/drill", batter=sel, **params))
+    drill = pd.DataFrame(
+        jget("/batting/drill",
+            batter=sel,
+            **{k: v for k, v in params.items() if k != "players"}) )
+
     st.subheader(f"{sel} – per match")
     st.dataframe(drill, hide_index=True, use_container_width=True)
