@@ -5,6 +5,7 @@ from typing import Optional, List, Tuple
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 import duckdb
+import pandas as pd, numpy as np
 
 # ── Parquet paths (edit if needed) ──────────────────────────────────────────
 # ── Parquet paths ──────────────────────────────────────────────────────────
@@ -34,10 +35,16 @@ def event_clause(event: Optional[str]) -> str:
     return "AND event_name ILIKE '%' || ? || '%'" if event else ""
 
 def run(sql: str, params: Tuple) -> List[dict]:
-    """Execute SQL; return list-of-dicts or raise 404 if empty."""
+    """Execute SQL; return list-of-dicts with NaN/Inf converted to None."""
     df = con.execute(sql, params).fetchdf()          # pandas DataFrame
     if df.empty:
         raise HTTPException(status_code=404, detail="No rows found")
+
+    # replace non-finite numbers -> None so json.dumps is happy
+    df = (
+        df.replace({np.inf: None, -np.inf: None})
+          .where(pd.notnull(df), None)
+    )
     return df.to_dict(orient="records")
 
 
