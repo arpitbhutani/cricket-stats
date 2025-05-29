@@ -27,7 +27,30 @@ with st.sidebar:
     inns = st.selectbox("Innings", ["Any", 1, 2])
     yrs  = st.slider("Look-back years", 0, 10, 3)
     mmin = st.slider("Min innings", 1, 25, 3)
-    bats = st.multiselect("Batter(s) (type to search)", players(team) if team != "<Any>" else [])
+
+    st.markdown("#### Batter(s)")
+
+    if team != "<Any>":
+        # A team is selected → list only that squad
+        bats = st.multiselect(
+            "Select from team list",
+            players(team),
+            placeholder="Choose one or more batters"
+        )
+    else:
+        # No team selected → global player search (2+ characters)
+        search_q = st.text_input("Quick search (type ≥2 chars)", "")
+        search_opts = (
+            [p["name"] for p in jget("/search/players", query=search_q, limit=20)]
+            if len(search_q) >= 2 else []
+        )
+        bats = st.multiselect(
+            "Matches",
+            search_opts,
+            placeholder="Start typing a name"
+        )
+
+    top_x = st.slider("Top X", 5, 100, 25)
     run  = st.button("Fetch")
 
 # ---------- main page -------------------------------------------------------
