@@ -29,16 +29,17 @@ app.add_middleware(
 )
 
 # ── helpers ────────────────────────────────────────────────────────────────
+# ── helpers ────────────────────────────────────────────────────────────────
 def event_clause(event: Optional[str]) -> str:
-    """Return SQL snippet for event filter or empty string."""
     return "AND event_name ILIKE '%' || ? || '%'" if event else ""
 
 def run(sql: str, params: Tuple) -> List[dict]:
-    """Execute SQL, return rows or 404 if empty."""
-    rows = [dict(r) for r in con.execute(sql, params).fetchall()]
-    if not rows:
+    """Execute SQL; return list-of-dicts or raise 404 if empty."""
+    df = con.execute(sql, params).fetchdf()          # pandas DataFrame
+    if df.empty:
         raise HTTPException(status_code=404, detail="No rows found")
-    return rows
+    return df.to_dict(orient="records")
+
 
 # ═══════════════════════════════════════════════════════════════════════════
 # 1️⃣  Player batting card
