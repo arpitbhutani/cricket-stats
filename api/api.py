@@ -57,14 +57,19 @@ def list_events(fmt: str):
 
 @app.get("/lists/teams")
 def list_teams(fmt: str, event: str = ""):
-    cur = db.execute(
+    sql = (
         f"SELECT DISTINCT batting_team AS name "
         f"FROM read_parquet('{BALLS}') "
-        "WHERE match_type = ? AND " + w("event_name", event) +
-        " ORDER BY 1",
-        (fmt, *(event,) if event else ()),
+        "WHERE match_type = ? AND " + w("event_name", event) + " ORDER BY 1"
     )
+
+    params: list[Any] = [fmt]
+    if event:                         # only add when event filter used
+        params.append(event)
+
+    cur = db.execute(sql, tuple(params))
     return rows(cur)
+
 
 @app.get("/lists/players")
 def list_players(team: str):
