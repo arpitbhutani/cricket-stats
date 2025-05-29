@@ -4,7 +4,7 @@ duckdb
 pandas
 polars
 pyarrow
-python-multipart
-requests
 streamlit
+requests
+python-multipart
 tqdm
