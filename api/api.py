@@ -23,8 +23,10 @@ app.add_middleware(
 )
 
 # ── utility -----------------------------------------------------------------
-def wild(txt: Optional[str]) -> str:
-    return f"ILIKE '%{txt}%'" if txt else "IS NOT NULL"
+def wild(col: str, txt: Optional[str]) -> str:
+    """Return a safe WHERE fragment for optional string filters."""
+    return f"{col} ILIKE '%' || ? || '%'" if txt else f"{col} IS NOT NULL"
+
 
 def season_filter(lookback: int) -> str:
     return "TRUE" if lookback <= 0 else f"season >= {datetime.date.today().year - lookback}"
@@ -80,12 +82,12 @@ def batting_summary(
         SELECT *
         FROM read_parquet('{BALLS}')
         WHERE match_type = ?
-          AND ({wild(event)})
-          AND ({wild(team)})
-          AND ({wild(opponent)})
-          AND ({wild(venue)})
+          AND ({wild('event_name', event)})
+          AND ({wild('batting_team', team)})
+          AND ({wild('bowling_team', opponent)})
+          AND ({wild('venue', venue)})
           AND ({'innings_number = ' + str(innings) if innings else 'TRUE'})
-          AND ({wild(batter)})
+          AND ({wild('batter', batter)})
           AND ({season_filter(years)})
       )
       SELECT
@@ -130,17 +132,18 @@ def bowling_summary(
     innings: Optional[int] = Query(None, ge=1, le=4),
     bowler: Optional[str] = None,
 ):
+
     sql = f"""
       WITH F AS (
         SELECT *
         FROM read_parquet('{BALLS}')
         WHERE match_type = ?
-          AND ({wild(event)})
-          AND ({wild(team)})
-          AND ({wild(opponent)})
-          AND ({wild(venue)})
+          AND ({wild('event_name',    event)})
+          AND ({wild('bowling_team',  team)})
+          AND ({wild('batting_team',  opponent)})
+          AND ({wild('venue',         venue)})
           AND ({'innings_number = ' + str(innings) if innings else 'TRUE'})
-          AND ({wild(bowler)})
+          AND ({wild('bowler',        bowler)})
           AND ({season_filter(years)})
       ),
       per_match AS (
