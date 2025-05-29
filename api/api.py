@@ -36,7 +36,15 @@ def w(col: str, val: Optional[str]) -> str:
     return f"{col} ILIKE '%' || ? || '%'" if val else f"{col} IS NOT NULL"
 
 def season(last: int) -> str:
-    return "TRUE" if last <= 0 else f"season >= {datetime.date.today().year - last}"
+    """
+    Season filter that also handles strings like '2013/14'.
+    Keeps only rows where the *first* 4-digit year is within N years.
+    """
+    if last <= 0:
+        return "TRUE"
+    cutoff = datetime.date.today().year - last
+    # CAST(substr(season,1,4) AS INT) safely extracts the first year
+    return f"CAST(substr(season,1,4) AS INT) >= {cutoff}"
 
 # ========================================================================== #
 # LIST ENDPOINTS
